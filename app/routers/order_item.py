@@ -59,4 +59,4 @@ async def update_order_item(
     item_id: Annotated[int, Path()],
     order_item: Annotated[OrderItemUpdate, Body()]
 ): 
-    
+    pass
