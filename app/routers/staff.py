@@ -1,11 +1,14 @@
+from typing import Annotated
 from fastapi import Depends, Query, Body, Path, HTTPException
 from fastapi.routing import APIRouter
 from sqlmodel import Session, select
-from typing import Annotated
 
-from ..models.staff import (Staff, StaffCreate, 
-            StaffPublic, StaffPublicWithOrderSessions)
-    
+from ..models.staff import (
+    Staff, StaffCreate, 
+    StaffPublic, StaffPublicWithOrderSessions
+)
+
+from ..security import get_password_hash
 from ..database import get_session
 
 router = APIRouter(
@@ -19,7 +22,9 @@ async def create_staff(
     session: Annotated[Session, Depends(get_session)],
     staff: Annotated[StaffCreate, Body()]
 ):
-    staff_db = Staff.model_validate(staff)
+    hashed_password = get_password_hash(staff.password)
+    extra_data = {"hashed_password": hashed_password}
+    staff_db = Staff.model_validate(staff, update=extra_data)
     session.add(staff_db)
     session.commit()
     session.refresh(staff_db)
@@ -38,7 +43,8 @@ async def read_staffs(
                 ).all()
     return staffs
 
-@router.get("/{staff_id}", response_model=StaffPublicWithOrderSessions)
+@router.get("/{staff_id}", 
+        response_model=StaffPublicWithOrderSessions)
 async def read_staff(
     *,
     session: Annotated[Session, Depends(get_session)],
@@ -46,5 +52,6 @@ async def read_staff(
 ):
     staff_db = session.get(Staff, staff_id)
     if not staff_db:
-        raise HTTPException(status_code=404, detail="Staff not found")
+        raise HTTPException(status_code=404, 
+                            detail="Staff not found")
     return staff_db

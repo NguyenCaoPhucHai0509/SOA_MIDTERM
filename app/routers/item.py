@@ -1,8 +1,9 @@
-from fastapi import Depends, Query, Body
+from fastapi import Depends, Query, Body, Request
 from fastapi.routing import APIRouter
 from sqlmodel import Session, select
 from typing import Annotated
 
+from ..templates import templates
 from ..models.item import Item, ItemCreate, ItemPublic
 from ..database import get_session
 
@@ -10,6 +11,7 @@ router = APIRouter(
     prefix="/items",
     tags=["Items"]
 )
+
 
 @router.post("/", response_model=ItemPublic)
 async def create_item(
@@ -27,6 +29,7 @@ async def create_item(
 @router.get("/", response_model=list[ItemPublic])
 async def read_items(
     *,
+    request: Request,
     session: Annotated[Session, Depends(get_session)],
     offset: Annotated[int, Query()] = 0,
     limit: Annotated[int, Query(le=100)] = 100
@@ -35,4 +38,9 @@ async def read_items(
                  .offset(offset)
                  .limit(limit)
                 ).all()
-    return items
+    templates.TemplateResponse(
+        name="menu.html",
+        request=request,
+        context={"items": items}
+    )
+    # return items

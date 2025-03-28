@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from decimal import Decimal
 from typing import Annotated, TYPE_CHECKING
+from datetime import datetime
 from .order_item import OrderItem
 
 if TYPE_CHECKING:
@@ -16,7 +17,8 @@ class OrderSession(OrderSessionBase, table=True):
     is_paid: Annotated[bool, Field()] = False
     total_amount: Annotated[Decimal, Field(max_digits=13, decimal_places=3,
                             ge=Decimal(0.000), default=Decimal(0.000))]
-
+    created_at: Annotated[datetime, Field(default=datetime.now())]
+    closed_at: Annotated[datetime | None, Field(default=None)]
     server: "Staff" = Relationship(back_populates="orders")
     order_items: list["OrderItem"] = Relationship(back_populates="order")
 
@@ -28,12 +30,15 @@ class OrderSessionPublic(OrderSessionBase):
     is_paid: Annotated[bool, Field()]
     total_amount: Annotated[Decimal, Field(max_digits=13, decimal_places=3,
                             ge=Decimal(0.000), default=Decimal(0.000))]
+    created_at: Annotated[datetime, Field()]
+    closed_at: Annotated[datetime | None, Field(default=None)]
 
 class OrderSessionUpdate(SQLModel):
-    tabel_id: Annotated[int | None, Field()]
-    is_paid: Annotated[int | None, Field(max_digits=13, decimal_places=3,
+    # tabel_id: Annotated[int | None, Field()]
+    is_paid: Annotated[bool | None, Field(default=None)]
+    total_amount: Annotated[Decimal | None, Field(max_digits=13, decimal_places=3,
                                     ge=Decimal(0.000), default=None)]
-    total_amount: Annotated[Decimal | None, Field()]
+    closed_at: Annotated[datetime | None, Field(default=None)]
 
     # server_id
 

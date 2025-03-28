@@ -18,11 +18,11 @@ class OrderItemBase(SQLModel):
     quantity: Annotated[int, Field(ge=1, default=1)]
     note: Annotated[str | None, Field(default=None)]
 
-    
-
 # Don't use Annotated[smth, Relationship(smth)]
 class OrderItem(OrderItemBase, table=True):
     __tablename__ = "order_item"
+
+    id: Annotated[int, Field(primary_key=True, default=None)]
     status: Annotated[OrderItemStatus, Field(default="pending")]
     
     order: "OrderSession" = Relationship(back_populates="order_items")
@@ -31,10 +31,11 @@ class OrderItemCreate(OrderItemBase):
     pass
 
 class OrderItemPublic(OrderItemBase):
+    id: Annotated[int, Field()]
     status: Annotated[OrderItemStatus, Field()]
     # order: Annotated["OrderSession", Field()]
     # item: Annotated["Item", Field()]
 
 class OrderItemUpdate(SQLModel):
-    quantity: Annotated[int | None, Field(ge=1)]
-    status: Annotated[OrderItemStatus | None, Field()]
+    quantity: Annotated[int | None, Field(ge=1, default=None)]
+    status: Annotated[OrderItemStatus | None, Field(default=None)]

@@ -49,7 +49,8 @@ async def read_orders(
                 ).all()
     return orders
 
-@router.get("/{order_id}", response_model=OrderSessionPublicWithOrderItems)
+@router.get("/{order_id}", 
+            response_model=OrderSessionPublicWithOrderItems)
 async def read_order(
     *,
     session: Annotated[Session, Depends(get_session)],
@@ -69,8 +70,9 @@ async def update_order(
 ):
     order_db = session.get(OrderSession, order_id)
     if not order_db:
-        raise HTTPException(status_code=404, detail="Order not found")
-    order_data = order.model_dump(unset_exclude=True)
+        raise HTTPException(status_code=404, 
+                            detail="Order not found")
+    order_data = order.model_dump(exclude_unset=True)
     order_db.sqlmodel_update(order_data)
     session.add(order_db)
     session.commit()
