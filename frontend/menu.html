@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+</head>
+<body>
+    <h2>Welcome to the Menu</h2>
+    <p>You are logged in.</p>
+    <button onclick="logout()">Logout</button>
+    <h2>Menu</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Available</th>
+            </tr>
+        </thead>
+        <tbody id="menu-table">
+        </tbody>
+    </table>
+    <script>
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "login.html";
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const tableBody = document.getElementById("menu-table");
+
+            try {
+                // Fetch items from API
+                const response = await fetch("http://localhost:8000/menu/", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + 
+                        localStorage.getItem("access_token") // Add token for auth
+                    },
+                    credentials: "include",
+                    mode: "cors"
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch items");
+                }
+
+                const items = await response.json();
+                
+                // Populate table
+                items.forEach(item => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                        <td>${item.available ? "Available" : "Out of Stock"}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                alert("Error:", error);
+                // document.getElementById("error-message").innerText = "Failed to load items.";
+            }
+        });
+
+    </script>
+</body>
+</html>

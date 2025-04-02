@@ -1,8 +1,10 @@
 from sqlmodel import SQLModel, Session, create_engine
-from .config import get_settings
+
+from .config import current_dir
+sqlite_url = f"sqlite:///{current_dir}/menu_service.db"
 
 # connect_args = {"check_same_thread": False}
-engine = create_engine(get_settings().DATABASE_URL, echo=True)
+engine = create_engine(sqlite_url, echo=True)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
