@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Session, create_engine
+import os
 
-from .config import current_dir
+current_dir = os.path.dirname(__file__)
 sqlite_url = f"sqlite:///{current_dir}/menu_service.db"
 
 # connect_args = {"check_same_thread": False}

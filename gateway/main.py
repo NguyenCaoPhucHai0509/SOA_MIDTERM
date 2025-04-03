@@ -23,7 +23,8 @@ ALGORITHM = settings.ALGORITHM
 
 SERVICES = {
     "staffs": "http://localhost:8001/staffs",
-    "menu": "http://localhost:8002/items"
+    "menu": "http://localhost:8002/items",
+    "order": "http://localhost:8003/orders"
 }
 
 app = FastAPI()
@@ -61,7 +62,6 @@ async def login(form_data: Annotated[LoginData, Form()]):
         detail="Login failed"
     )
 
-
 def decode_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         # Decoding JWT
@@ -91,13 +91,14 @@ async def proxy_request(service_url: str, path: str, request: Request, staff_inf
         method = request.method
         url = f"{service_url}{path}"
         headers = dict(request.headers)
-        # headers["X-Staff-ID"] = str(staff_info["sub"])
-        # headers["X-Staff-Role"] = str(staff_info["role"])
-        # headers["X-Staff-Name"] = str(staff_info["name"])
+        # Using payload to get staff info and put all of them in headers.
+        # First try.
+        headers["X-Staff-ID"] = str(staff_info["sub"])
+        headers["X-Staff-Role"] = str(staff_info["role"])
+        headers["X-Staff-Name"] = str(staff_info["name"])
 
         params = request.query_params
-
-  
+        
         if request.method in ["POST", "PUT"]:
             try:
                 json_body = await request.json()
