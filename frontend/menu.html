@@ -389,7 +389,6 @@
                 </tr>
             </thead>
             <tbody id="menu-table">
-                <!-- Table content will be loaded dynamically -->
             </tbody>
         </table>
 
@@ -412,21 +411,17 @@
     </footer>
 
     <script>
-        // Format currency
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND'
             }).format(amount);
         }
-
-        // Logout function
         function logout() {
             localStorage.removeItem("access_token");
             window.location.href = "login.html";
         }
 
-        // Update dashboard stats
         function updateStats(items) {
             const totalItems = items.length;
             const availableItems = items.filter(item => item.available).length;
@@ -437,14 +432,12 @@
             document.getElementById('unavailable-items').textContent = unavailableItems;
         }
 
-        // Initialize the page when DOM is loaded
         document.addEventListener("DOMContentLoaded", async () => {
             const tableBody = document.getElementById("menu-table");
             const searchInput = document.getElementById("search-input");
             let allItems = [];
 
             try {
-                // Fetch items from API
                 const response = await fetch("http://localhost:8000/menu/", {
                     method: "GET",
                     headers: {
@@ -458,7 +451,6 @@
 
                 allItems = await response.json();
 
-                // Update staff name if available
                 try {
                     const tokenData = parseJwt(localStorage.getItem("access_token"));
                     if (tokenData && tokenData.name) {
@@ -468,13 +460,10 @@
                     console.error("Error parsing token:", e);
                 }
 
-                // Update dashboard stats
                 updateStats(allItems);
 
-                // Initialize table with all items
                 renderTable(allItems);
 
-                // Add search functionality
                 searchInput.addEventListener("input", (e) => {
                     const searchTerm = e.target.value.toLowerCase();
                     const filteredItems = allItems.filter(item =>
@@ -488,7 +477,6 @@
                 alert("Không thể tải danh sách món ăn. Vui lòng kiểm tra kết nối và thử lại.");
             }
 
-            // Function to render table with given items
             function renderTable(items) {
                 tableBody.innerHTML = '';
 
@@ -512,7 +500,6 @@
                     tableBody.appendChild(row);
                 });
 
-                // If no items found
                 if (items.length === 0) {
                     const row = document.createElement("tr");
                     row.innerHTML = `
@@ -525,7 +512,6 @@
             }
         });
 
-        // Helper function to parse JWT token
         function parseJwt(token) {
             if (!token) return null;
             const base64Url = token.split('.')[1];
