@@ -1,9 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from decimal import Decimal
-from typing import Annotated, TYPE_CHECKING
+from typing import Annotated
 
-if TYPE_CHECKING:
-    from .order_item import OrderItem
 
 class ItemBase(SQLModel):
     name: Annotated[str, Field(max_length=64)]
