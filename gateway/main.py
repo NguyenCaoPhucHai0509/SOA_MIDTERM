@@ -24,8 +24,14 @@ ALGORITHM = settings.ALGORITHM
 SERVICES = {
     "staffs": "http://localhost:8001/staffs",
     "menu": "http://localhost:8002/items",
-    "order": "http://localhost:8003/orders"
+    "orders": "http://localhost:8003/orders"
 }
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("API GATEWAY: WELCOME")
+    yield
+    print("Sayonaraaaa!")
 
 app = FastAPI()
 
@@ -89,7 +95,7 @@ async def proxy_request(service_url: str, path: str, request: Request, staff_inf
     async with httpx.AsyncClient() as client:
 
         method = request.method
-        url = f"{service_url}{path}"
+        url = f"{service_url}/{path}"
         headers = dict(request.headers)
         # Using payload to get staff info and put all of them in headers.
         # First try.
@@ -117,8 +123,17 @@ async def proxy_request(service_url: str, path: str, request: Request, staff_inf
                 method, url, headers=headers, params=params
             )
 
+        print("RESPONSE STATUS CODE:", response.status_code)
+        try:
+            response_content = response.json()
+            print("RESPONSE BODY:", response_content) 
+        except Exception:
+            response_content = \
+                {"message": "Empty or invalid response from downstream service"}
+            print("RESPONSE BODY ERROR:", response.text)
+
         return JSONResponse(
-            content=response.json(), 
+            content=response_content, 
             status_code=response.status_code
         )
     
@@ -129,9 +144,8 @@ async def gateway_proxy(
     request: Request, 
     staff_info: dict = Depends(decode_access_token)
 ):
-    # print("SERVICE: ", service)
-    # print("TOKEN: ", staff_info)
-    if path == "": path = "/"
+    print("SERVICE: ", service)
+    print("TOKEN: ", staff_info)
     
     if service not in SERVICES:
         raise HTTPException(

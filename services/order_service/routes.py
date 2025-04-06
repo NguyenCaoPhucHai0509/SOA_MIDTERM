@@ -10,13 +10,23 @@ from typing import Annotated, TYPE_CHECKING
 from .models import (
     OrderSession, OrderSessionCreate, 
     OrderSessionPublic, OrderSessionUpdate,
-    OrderItem, OrderItemPublic, OrderItemCreate,
-    OrderItemUpdate
+    OrderItem, OrderItemPublicV1, OrderItemPublicV2,
+    OrderItemCreate, OrderItemUpdate, OrderItemStatus
 )
 from .database import get_session
 
 router = APIRouter()
 
+# async def validate_table(
+#     session: Annotated[Session, Depends(get_session)],
+#     table_id: int,
+# ):
+#     table_id = session.get(OrderSession, )
+
+
+'''
+Create an order. 1 Table - 1 Order
+'''
 @router.post("/", response_model=OrderSessionPublic)
 async def create_order(
     *,
@@ -61,7 +71,7 @@ async def read_orders(
     return orders
  
 
-@router.get("/{order_id}", response_model=OrderSessionPublic)
+@router.get("/{order_id}/", response_model=OrderSessionPublic)
 async def read_order(
     *,
     session: Annotated[Session, Depends(get_session)],
@@ -75,7 +85,7 @@ async def read_order(
         )
     return order_db
 
-@router.put("/{order_id}", response_model=OrderSessionPublic)
+@router.put("/{order_id}/", response_model=OrderSessionPublic)
 async def update_order(
     *,
     session: Annotated[Session, Depends(get_session)],
@@ -93,8 +103,13 @@ async def update_order(
     session.refresh(order_db)
     return order_db
 
-# Adding order items to existed order
-@router.put("/{order_id}/extend/", response_model=OrderSessionPublic)
+'''
+Adding order items to existed order
+This is different to vanila update function, bc. update function
+overwrites some field, but for adding more order items, we can only
+append to existed order item list of that order
+'''
+@router.put("/{order_id}/extend", response_model=OrderSessionPublic)
 async def add_more_order_items(
     *,
     session: Annotated[Session, Depends(get_session)],
@@ -118,47 +133,68 @@ async def add_more_order_items(
     session.refresh(order_db)
     return order_db
 
-@router.get("/order-items/", response_model=list[OrderItemPublic])
-async def read_order_items(
-    *,
-    session: Annotated[Session, Depends(get_session)],
-    offset: Annotated[int, Query()] = 0,
-    limit: Annotated[int, Query(le=100)] = 100
-):
-    order_items = session.exec(select(OrderItem)
-                 .offset(offset)
-                 .limit(limit)
-                ).all()
-    return order_items
-
-# @router.get("{order_id}/order-items/{order_item_id}", response_model=OrderItemPublic)
+# @router.get("/{order_id}/order-items/{order_item_id}", 
+#     response_model=OrderItemPublicV2
+# )
 # async def read_order_item(
 #     *,
 #     session: Annotated[Session, Depends(get_session)],
-#     order_id
+#     order_id: Annotated[int, Path()],
 #     order_item_id: Annotated[int, Path()]
 # ):
-#     order_db = session.exec(Order, order_item_id)
-#     if not order_item_id:
-#         raise HTTPException(status_code=404, 
-#                             detail="Order Item not found")
-#     return order_items_db
+#     pass
 
-# @router.put("/order-items/{order_item_id}", response_model=OrderItemPublic)
-# async def update_order_item(
-#     *,
-#     session: Annotated[Session, Depends(get_session)],
-#     order_item_id: Annotated[int, Path()],
-#     order_item: OrderItemUpdate
-# ): 
-#     order_item_db = session.get(OrderItem, order_item_id)
-#     if not order_item_db:
-#         raise HTTPException(status_code=404, 
-#                             detail="Order Item not found")
+
+
+def validate_status_transition(
+    current_status: OrderItemStatus,
+    new_status: OrderItemStatus
+):
+    valid_transitions = {
+        OrderItemStatus.pending: {OrderItemStatus.received, OrderItemStatus.canceled},
+        OrderItemStatus.received: {OrderItemStatus.completed},
+        OrderItemStatus.completed: set(),
+        OrderItemStatus.canceled: set()
+    }
+    if new_status not in valid_transitions[current_status]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status transition from {current_status.value} to {new_status.value}"
+        )
     
-#     order_item_data = order_item.model_dump(exclude_unset=True)
-#     order_item_db.sqlmodel_update(order_item_data)
-#     session.add(order_item_db)
-#     session.commit()
-#     session.refresh(order_item_db)
-#     return order_item_db
+'''
+Updating only 1 order item. This is for waiters, they only update for each one
+'''
+@router.put("/{order_id}/order-items/{order_item_id}/", 
+    response_model=OrderItemPublicV2
+)
+async def update_order_item(
+    *,
+    session: Annotated[Session, Depends(get_session)],
+    order_id: Annotated[int, Path()],
+    order_item_id: Annotated[int, Path()],
+    order_item: OrderItemUpdate
+): 
+    # print("DEBUG: ", order_id, order_item_id)
+    order_item_db = session.exec(
+        select(OrderItem)
+        .where(OrderItem.id == order_item_id, 
+            OrderItem.order_id == order_id)
+    ).first()
+
+
+    if not order_item_db:
+        raise HTTPException(
+            status_code=404, 
+            detail="Order Item not found"
+        )
+    
+    if order_item.status:
+        validate_status_transition(order_item_db.status, order_item.status)
+
+    order_item_data = order_item.model_dump(exclude_unset=True)
+    order_item_db.sqlmodel_update(order_item_data)
+    session.add(order_item_db)
+    session.commit()
+    session.refresh(order_item_db)
+    return order_item_db

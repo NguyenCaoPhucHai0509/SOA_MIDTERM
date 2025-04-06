@@ -68,7 +68,11 @@ async def login_submit(
         },
         expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "role": staff.role
+    }
 
 
 @router.get("/", response_model=list[StaffPublic])

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders</title>
+</head>
+<body>
+    <h2>Manage Orders</h2>
+
+    <!-- Orders List -->
+    <h3>Orders</h3>
+    <table border="1" id="ordersTable">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Table ID</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="ordersTableBody">
+            <!-- Orders will be dynamically populated here -->
+        </tbody>
+    </table>
+
+    <!-- Selected Order Details -->
+    <div id="orderDetails" style="display: none;">
+        <h3>Order Details (Order ID: <span id="detailOrderId"></span>)</h3>
+        <p><strong>Table ID:</strong> <span id="detailTableId"></span></p>
+        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+        <p><strong>Total Amount:</strong> <span id="detailTotalAmount"></span></p>
+        <p><strong>Created At:</strong> <span id="detailCreatedAt"></span></p>
+
+        <hr style="height:2px;border-width:0;color:gray;background-color:gray">
+        <!-- Add New Order Items -->
+        <h3>Add New Order Items</h3> <span><button type="button" onclick="confirmOrder()">Confirm</button></span>
+        <table border="1" id="menuTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Available</th>
+                    <th>Quantity</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody id="menuTableBody">
+                <!-- Menu items will be dynamically populated here -->
+            </tbody>
+        </table>
+
+        <hr style="height:2px;border-width:0;color:gray;background-color:gray">
+        <!-- Edit Existing Order Items -->
+        <h3>Order Items</h3>
+        <table border="1" id="orderItemsTable">
+            <thead>
+                <tr>
+                    <!-- <th>ID</th> -->
+                    <th>Item ID</th>
+                    <th>Quantity</th>
+                    <th>Note</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="orderItemsTableBody">
+                <!-- Order items will be dynamically populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let currentOrderId = null;
+        let orders = []; // Store all fetched orders globally
+
+        // Fetch orders from the API
+        async function fetchOrders() {
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/orders', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders.');
+                }
+
+                orders = await response.json(); // Store orders globally
+                populateOrdersTable(orders);
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                alert('Failed to fetch orders. Please try again.');
+            }
+        }
+
+        // Populate the orders table
+        function populateOrdersTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${order.table_id}</td>
+                    <td>${order.status}</td>
+                    <td>${parseFloat(order.total_amount).toFixed(2)}</td>
+                    <td>${new Date(order.created_at).toLocaleString()}</td>
+                    <td>
+                        <button onclick="showOrderDetails(${order.id})">View Details</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Show order details
+        function showOrderDetails(orderId) {
+            currentOrderId = orderId;
+
+            // Find the selected order
+            const selectedOrder = orders.find(o => o.id === orderId);
+            if (!selectedOrder) {
+                alert('Order not found.');
+                return;
+            }
+
+            // Display order details
+            document.getElementById('detailOrderId').textContent = selectedOrder.id;
+            document.getElementById('detailTableId').textContent = selectedOrder.table_id;
+            document.getElementById('detailStatus').textContent = selectedOrder.status;
+            document.getElementById('detailTotalAmount').textContent = parseFloat(selectedOrder.total_amount).toFixed(2);
+            document.getElementById('detailCreatedAt').textContent = new Date(selectedOrder.created_at).toLocaleString();
+
+            // Populate order items table
+            populateOrderItemsTable(selectedOrder.order_items);
+
+            // Fetch menu for adding new items
+            fetchMenu();
+
+            // Show the order details section
+            document.getElementById('orderDetails').style.display = 'block';
+        }
+
+        // Populate the order items table
+        function populateOrderItemsTable(orderItems) {
+            const tbody = document.getElementById('orderItemsTableBody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            orderItems.forEach(orderItem => {
+                const row = document.createElement('tr');
+                // Khi Dev thi co the de <td>${orderItem.id}</td>
+                // De de quan ly
+                // Khi Product thi khong nen de no
+                row.innerHTML = `
+                    
+                    <td>${orderItem.item_id}</td>
+                    <td>${orderItem.quantity}</td>
+                    <td>${orderItem.note || 'None'}</td>
+                    <td>${orderItem.status}</td>
+                    <td>
+                        <button onclick="editOrderItem(${orderItem.id}, ${orderItem.quantity}, '${orderItem.note}')">Edit</button>
+                        <button onclick="cancelOrderItem(${orderItem.id})">Cancel</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Fetch menu for adding new items
+        async function fetchMenu() {
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/menu', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch menu.');
+                }
+
+                const menuItems = await response.json();
+                populateMenuTable(menuItems);
+            } catch (error) {
+                console.error('Error fetching menu:', error);
+                alert('Failed to fetch menu. Please try again.');
+            }
+        }
+
+        // Populate the menu table
+        function populateMenuTable(menuItems) {
+            const tbody = document.getElementById('menuTableBody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            menuItems.forEach(item => {
+                const price = parseFloat(item.price); // Ensure price is a number
+                if (isNaN(price)) {
+                    console.error(`Invalid price for item ID ${item.id}: ${item.price}`);
+                    return; // Skip invalid items
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="checkbox" class="item-checkbox" data-id="${item.id}"></td>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>$${price.toFixed(2)}</td>
+                    <td>${item.is_available ? 'Yes' : 'No'}</td>
+                    <td><input type="number" class="item-quantity" value="1" min="1"></td>
+                    <td><input type="text" class="item-note" placeholder="Optional note"></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Confirm to add order items (list of order items)
+        async function confirmOrder() {
+            const selectedItems = [];
+            const rows = document.querySelectorAll('#menuTableBody tr');
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('.item-checkbox');
+                if (checkbox.checked) {
+                    const itemId = parseInt(checkbox.dataset.id);
+                    const quantity = parseInt(row.querySelector('.item-quantity').value);
+                    const note = row.querySelector('.item-note').value;
+                    selectedItems.push({
+                        item_id: itemId,
+                        quantity: quantity,
+                        note: note
+                    });
+                }
+            });
+
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item.');
+                return;
+            }
+
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `http://localhost:8000/orders/${currentOrderId}/extend`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(selectedItems) // Send as an array directly
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add items to the order.');
+                }
+
+                alert('Items added to the order successfully!');
+                showOrderDetails(currentOrderId); // Refresh the order details
+            } catch (error) {
+                console.error('Error adding items to the order:', error);
+                alert('Failed to add items to the order. Please try again.');
+            }
+        }
+
+        // Edit an order item
+        function editOrderItem(itemId, quantity, note) {
+            const newQuantity = prompt('Enter new quantity:', quantity);
+            const newNote = prompt('Enter new note (optional):', note || '');
+
+            if (newQuantity === null || isNaN(newQuantity)) {
+                alert('Invalid quantity.');
+                return;
+            }
+
+            updateOrderItem(itemId, parseInt(newQuantity), newNote || null);
+        }
+
+        // Update an order item
+        async function updateOrderItem(itemId, quantity, note) {
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `http://localhost:8000/orders/${currentOrderId}/order-items/${itemId}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        quantity: quantity,
+                        note: note
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update order item.');
+                }
+
+                alert('Order item updated successfully.');
+                showOrderDetails(currentOrderId); // Refresh the order details
+            } catch (error) {
+                console.error('Error updating order item:', error);
+                alert('Failed to update order item. Please try again.');
+            }
+        }
+
+        // Cancel an order item
+        async function cancelOrderItem(itemId) {
+            const confirmCancel = confirm('Are you sure you want to cancel this order item?');
+            if (!confirmCancel) return;
+
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/orders/items/${itemId}/cancel`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to cancel order item.');
+                }
+
+                alert('Order item canceled successfully.');
+                showOrderDetails(currentOrderId); // Refresh the order details
+            } catch (error) {
+                console.error('Error canceling order item:', error);
+                alert('Failed to cancel order item. Please try again.');
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders();
+        });
+    </script>
+</body>
+</html>
