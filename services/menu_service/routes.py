@@ -1,10 +1,15 @@
-from fastapi import Depends, Query, Body
+from fastapi import Depends, Query, Body, Path, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.routing import APIRouter
 from sqlmodel import Session, select, Field
 from typing import Annotated
+import os
 
 from .models import Item, ItemCreate, ItemPublic
 from .database import get_session
+
+CURRENT_DIR = os.path.dirname(__file__)
+STATIC_DIR = f"{CURRENT_DIR}/static"
 
 router = APIRouter()
 
@@ -34,3 +39,13 @@ async def read_items(
     ).all()
 
     return items
+
+@router.get("/images/{filename}")
+async def get_image(filename: Annotated[str, Path()]):
+    real_img_path = os.path.join(STATIC_DIR, "images", filename)
+    if not os.path.exists(real_img_path):
+        raise HTTPException(
+            status_code=404, 
+            detail="Image not found"
+        )
+    return FileResponse(real_img_path)

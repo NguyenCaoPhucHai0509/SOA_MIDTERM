@@ -7,8 +7,8 @@ class ItemBase(SQLModel):
     name: Annotated[str, Field(max_length=64)]
     price: Annotated[Decimal, Field(max_digits=13, decimal_places=3,
                 ge=Decimal(0.000), default=Decimal(0.000))]
-    
     is_available: Annotated[bool, Field(default=True)]
+    img_path: Annotated[str, Field(default=None)]
 
 class Item(ItemBase, table=True):
     id: Annotated[int | None, Field(primary_key=True, default=None)]

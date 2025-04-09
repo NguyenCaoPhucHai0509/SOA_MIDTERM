@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Order Cuisine System - Test Frontend</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar {
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            box-sizing: border-box;
+            border-right: 1px solid #ccc;
+        }
+
+        #sidebar h3 {
+            margin-top: 0;
+        }
+
+        .tab {
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+        }
+
+        .tab.active {
+            background-color: #d0d0d0;
+            font-weight: bold;
+        }
+
+        #main {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .table-tile {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .table-tile.available {
+            background-color: #a8e6a1;
+        }
+
+        .table-tile.available:hover {
+            background-color: #92d88a;
+            transform: scale(1.05);
+        }
+
+        .table-tile.available:active {
+            transform: scale(0.95);
+        }
+
+        .table-tile.unavailable {
+            background-color: #ccc;
+            pointer-events: none;
+        }
+
+        #searchBar {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        img.item-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <h3>Menu</h3>
+            <div class="tab active" onclick="switchTab('createOrder')">Create Order</div>
+            <div class="tab" onclick="switchTab('statistic')">Statistic</div>
+            <hr>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Main content -->
+        <div id="main">
+            <!-- Create Order Section -->
+            <div id="createOrderSection">
+                <h2>Create Order</h2>
+                <div class="tables-grid" id="tableGrid">
+                    <!-- Dynamic tables here -->
+                </div>
+
+                <input type="text" id="searchBar" placeholder="Search menu items..." onkeyup="filterMenu()">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Note</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody">
+                        <!-- Dynamic menu items -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Statistic Section -->
+            <div id="statisticSection" class="hidden">
+                <h2>Statistic</h2>
+                <p>Not implemented yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gateway = 'http://localhost:8000';
+        let selectedTableId = null;
+        let orderItems = [];
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            if (tabName === 'createOrder') {
+                document.getElementById('createOrderSection').classList.remove('hidden');
+                document.getElementById('statisticSection').classList.add('hidden');
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else if (tabName === 'statistic') {
+                document.getElementById('createOrderSection').classList.add('hidden');
+                document.getElementById('statisticSection').classList.remove('hidden');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.href = 'test_client.html';
+        }
+
+        function getAuthHeader() {
+            const token = localStorage.getItem('access_token');
+            return {
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        async function fetchTables() {
+            const res = await fetch(`${gateway}/tables/`, { headers: getAuthHeader() });
+            const tables = await res.json();
+            const grid = document.getElementById('tableGrid');
+            grid.innerHTML = '';
+            tables.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `table-tile ${t.is_available ? 'available' : 'unavailable'}`;
+                div.innerText = `Table ${t.id}`;
+                if (t.is_available) {
+                    div.onclick = () => {
+                        selectedTableId = t.id;
+                        document.querySelectorAll('.table-tile').forEach(el => el.style.outline = 'none');
+                        div.style.outline = '3px solid #000';
+                    };
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        async function fetchMenu() {
+            const res = await fetch(`${gateway}/menu/`, { headers: getAuthHeader() });
+            const items = await res.json();
+            const tbody = document.getElementById('menuTableBody');
+            tbody.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${gateway}/menu/${item.img_path}" class="item-img"></td>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td><input type="number" min="1" value="1" id="qty-${item.id}" style="width:60px"></td>
+                    <td><input type="text" id="note-${item.id}" placeholder="Optional"></td>
+                    <td><button onclick="addItem(${item.id})">Add</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function addItem(itemId) {
+            const qty = document.getElementById(`qty-${itemId}`).value;
+            const note = document.getElementById(`note-${itemId}`).value;
+            if (!selectedTableId) {
+                alert('Please select a table first.');
+                return;
+            }
+            orderItems.push({ item_id: itemId, quantity: parseInt(qty), note });
+            alert('Item added to order.');
+        }
+
+        function filterMenu() {
+            const filter = document.getElementById('searchBar').value.toLowerCase();
+            const rows = document.querySelectorAll('#menuTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        window.onload = async () => {
+            const token = localStorage.getItem('access_token');
+            const role = localStorage.getItem('role');
+
+            if (!token || !role) {
+                document.body.innerHTML = '<h3>Please login first.</h3>';
+                return;
+            }
+
+            if (role !== 'waiter' && role !== 'manager') {
+                document.body.innerHTML = '<h3>Access denied: only waiter/manager can access this page.</h3>';
+                return;
+            }
+
+            switchTab('createOrder');
+            await fetchTables();
+            await fetchMenu();
+        };
+    </script>
+</body>
+
+</html>

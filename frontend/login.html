@@ -43,12 +43,13 @@
 
                 // Store the access token in localStorage
                 localStorage.setItem('access_token', access_token);
+                localStorage.setItem('role', role)
 
                 // Redirect based on the user's role
                 if (role === 'chef') {
                     window.location.href = 'tmp.html'; // Redirect to tmp.html for chefs
                 } else if (role === 'waiter' || role === 'manager') {
-                    window.location.href = 'menu.html'; // Redirect to menu.html for waiters/managers
+                    window.location.href = 'dashboard.html'; // Redirect to menu.html for waiters/managers
                 } else {
                     throw new Error('Unknown user role.');
                 }

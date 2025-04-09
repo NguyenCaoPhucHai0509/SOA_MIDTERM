@@ -69,6 +69,24 @@ async def read_orders(
                  .limit(limit)
                 ).all()
     return orders
+
+'''
+Don't put this function below "/{order_id}/" function
+'''
+@router.get("/order-items/", response_model=list[OrderItemPublicV2])
+async def read_order_items(
+    *,
+    session: Annotated[Session, Depends(get_session)],
+    offset: Annotated[int | None, Query()] = 0,
+    limit: Annotated[int | None, Query()] = 100
+):
+    order_items_db = session.exec(
+        select(OrderItem)
+        .offset(offset)
+        .limit(limit)
+    ).all()
+
+    return order_items_db
  
 
 @router.get("/{order_id}/", response_model=OrderSessionPublic)

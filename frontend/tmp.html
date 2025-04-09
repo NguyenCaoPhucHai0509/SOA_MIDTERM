@@ -3,9 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheff</title>
+    <title>Chef Dashboard</title>
 </head>
 <body>
-    Hello World
+    <h2>Chef Dashboard</h2>
+
+    <!-- Menu Items Section -->
+    <h3>Menu Items</h3>
+    <input type="text" id="menuSearch" placeholder="Search menu items..." oninput="filterMenuItems()">
+    <table border="1">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllMenuItems" onclick="toggleAllMenuItems()"></th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Available</th>
+            </tr>
+        </thead>
+        <tbody id="menuTableBody">
+            <!-- Menu items will be dynamically populated here -->
+        </tbody>
+    </table>
+    <button onclick="toggleAvailability()">Toggle Selected Items Availability</button>
+
+    <!-- Orders Section -->
+    <h3>Order Items</h3>
+    <input type="text" id="orderItemsSearch" placeholder="Search order items..." oninput="filterOrderItems()">
+    <table border="1">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllOrderItems" onclick="toggleAllOrderItems()"></th>
+                <th>Order ID</th>
+                <th>Item ID</th>
+                <th>Quantity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="orderItemsTableBody">
+            <!-- Order items will be dynamically populated here -->
+        </tbody>
+    </table>
+    <label for="statusDropdown">Change Status:</label>
+    <select id="statusDropdown">
+        <option value="pending">Pending</option>
+        <option value="prepared">Prepared</option>
+        <option value="ready">Ready</option>
+    </select>
+    <button onclick="updateOrderItemsStatus()">Apply Status to Selected Items</button>
+
+    <script>
+        let menuItems = [];
+        let orderItems = [];
+
+        // Fetch menu items and order items
+        async function fetchData() {
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                // Fetch menu items
+                const menuResponse = await fetch('http://localhost:8000/menu', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                if (!menuResponse.ok) throw new Error('Failed to fetch menu items.');
+                menuItems = await menuResponse.json();
+                populateMenuTable(menuItems);
+
+                // Fetch order items
+                const orderResponse = await fetch('http://localhost:8000/orders/order-items/', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                if (!orderResponse.ok) throw new Error('Failed to fetch order items.');
+                orderItems = await orderResponse.json();
+                populateOrderItemsTable(orderItems);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Failed to load data. Please try again.');
+            }
+        }
+
+        // Populate menu table
+        function populateMenuTable(items) {
+            const tbody = document.getElementById('menuTableBody');
+            tbody.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.dataset.id = item.id; // Store item ID in row
+                row.innerHTML = `
+                    <td><input type="checkbox" class="menu-item-checkbox" data-id="${item.id}"></td>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>$${parseFloat(item.price).toFixed(2)}</td>
+                    <td>${item.is_available ? 'Yes' : 'No'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Populate order items table
+        function populateOrderItemsTable(orderItems) {
+            const tbody = document.getElementById('orderItemsTableBody');
+            tbody.innerHTML = '';
+            orderItems.forEach(orderItem => {
+                const row = document.createElement('tr');
+                row.dataset.id = orderItem.id; // Store item ID in row
+                row.innerHTML = `
+                    <td><input type="checkbox" class="order-item-checkbox" data-id="${orderItem.id}"></td>
+                    <td>${orderItem.order_id}</td>
+                    <td>${orderItem.item_id}</td>
+                    <td>${orderItem.quantity}</td>
+                    <td>${orderItem.status}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter menu items based on search query
+        function filterMenuItems() {
+            const query = document.getElementById('menuSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#menuTableBody tr');
+            rows.forEach(row => {
+                const name = row.cells[2].textContent.toLowerCase(); // Item name column
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Filter order items based on search query
+        function filterOrderItems() {
+            const query = document.getElementById('orderItemsSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#orderItemsTableBody tr');
+            rows.forEach(row => {
+                const itemName = row.cells[1].textContent.toLowerCase(); // Item name column
+                row.style.display = itemName.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Toggle all menu item checkboxes
+        function toggleAllMenuItems() {
+            const isChecked = document.getElementById('selectAllMenuItems').checked;
+            document.querySelectorAll('.menu-item-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        }
+
+        // Toggle all order item checkboxes
+        function toggleAllOrderItems() {
+            const isChecked = document.getElementById('selectAllOrderItems').checked;
+            document.querySelectorAll('.order-item-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        }
+
+        // Toggle availability of selected menu items
+        async function toggleAvailability() {
+            const selectedIds = Array.from(document.querySelectorAll('.menu-item-checkbox:checked'))
+                .map(checkbox => parseInt(checkbox.dataset.id));
+
+            if (selectedIds.length === 0) {
+                alert('Please select at least one item.');
+                return;
+            }
+
+            const accessToken = localStorage.getItem('access_token');
+            try {
+                const response = await fetch('http://localhost:8000/menu', {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: selectedIds })
+                });
+
+                if (!response.ok) throw new Error('Failed to update availability.');
+                alert('Availability toggled successfully.');
+                fetchData(); // Refresh data
+            } catch (error) {
+                console.error('Error toggling availability:', error);
+                alert('Failed to toggle availability. Please try again.');
+            }
+        }
+
+        // Update status of selected order items
+        async function updateOrderItemsStatus() {
+            const selectedIds = Array.from(document.querySelectorAll('.order-item-checkbox:checked'))
+                .map(checkbox => parseInt(checkbox.dataset.id));
+            const newStatus = document.getElementById('statusDropdown').value;
+
+            if (selectedIds.length === 0) {
+                alert('Please select at least one item.');
+                return;
+            }
+
+            const accessToken = localStorage.getItem('access_token');
+            try {
+                const response = await fetch('http://localhost:8000/order-items', {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: selectedIds, status: newStatus })
+                });
+
+                if (!response.ok) throw new Error('Failed to update status.');
+                alert('Status updated successfully.');
+                fetchData(); // Refresh data
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('Failed to update status. Please try again.');
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
 </body>
 </html>

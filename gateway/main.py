@@ -1,13 +1,12 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
-import requests
 import jwt
 from jwt.exceptions import InvalidTokenError
 import httpx
 
 from fastapi import (
     FastAPI, HTTPException, Request,
-    Depends, Form, status
+    Depends, Form, Path, Response, status
 )
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +23,8 @@ ALGORITHM = settings.ALGORITHM
 SERVICES = {
     "staffs": "http://localhost:8001/staffs",
     "menu": "http://localhost:8002/items",
-    "orders": "http://localhost:8003/orders"
+    "orders": "http://localhost:8003/orders",
+    "tables": "http://localhost:8004/tables"
 }
 
 @asynccontextmanager
@@ -52,14 +52,14 @@ class LoginData(BaseModel):
 
 @app.post("/login")
 async def login(form_data: Annotated[LoginData, Form()]):
-
-    response = requests.post(
-        f"{SERVICES['staffs']}/login",
-        data={
-            "username": form_data.username,
-            "password": form_data.password
-        }
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{SERVICES['staffs']}/login",
+            data={
+                "username": form_data.username,
+                "password": form_data.password
+            }
+        )
     if response.status_code == 200:
         return response.json()
     
@@ -90,8 +90,47 @@ def decode_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"}
         )
+
+'''
+This function helps to get an image without Authorization Header.
+If there is too many image's request, will it be crashed?
+'''
+@app.get("/{service}/images/{filename}")
+async def get_image(
+    service: Annotated[str, Path()], 
+    filename: Annotated[str, Path()]
+):
+    # print("SERVICE: ", service)
+    # print("FILENAME: ", filename)
+    service_url = SERVICES[service]
+    if not service_url:
+        raise HTTPException(
+            status_code=404,
+            detail="Service not found"
+        )
     
-async def proxy_request(service_url: str, path: str, request: Request, staff_info: dict):
+    async with httpx.AsyncClient() as client:
+        img_url = f"{service_url}/images/{filename}"
+        response = await client.get(img_url)
+
+    if response.status_code != 200:
+        raise HTTPException(
+        status_code=404,
+        detail="Image not found"
+    )
+    
+    return Response(
+        content=response.content, 
+        media_type=response.headers.get("content-type")
+    )
+    
+    
+async def proxy_request(
+    service_url: str, 
+    path: str, 
+    request: Request, 
+    staff_info: dict
+):
     async with httpx.AsyncClient() as client:
 
         method = request.method
@@ -123,21 +162,24 @@ async def proxy_request(service_url: str, path: str, request: Request, staff_inf
                 method, url, headers=headers, params=params
             )
 
-        print("RESPONSE STATUS CODE:", response.status_code)
+        # print("RESPONSE STATUS CODE:", response.status_code)
         try:
             response_content = response.json()
-            print("RESPONSE BODY:", response_content) 
+            # print("RESPONSE BODY:", response_content) 
         except Exception:
             response_content = \
-                {"message": "Empty or invalid response from downstream service"}
-            print("RESPONSE BODY ERROR:", response.text)
+                {"message": "Empty or invalid response" + 
+                            " from downstream service"}
+            # print("RESPONSE BODY ERROR:", response.text)
 
         return JSONResponse(
             content=response_content, 
             status_code=response.status_code
         )
     
-@app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/{service}/{path:path}", 
+    methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def gateway_proxy(
     service: str, 
     path: str, 
