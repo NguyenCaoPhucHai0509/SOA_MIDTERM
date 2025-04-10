@@ -4,6 +4,11 @@ from datetime import datetime
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
 
+class OrderSessionStatus(str, Enum):
+    opening = "opening"
+    closed = "closed"
+    canceled = "canceled"
+
 class OrderSessionBase(SQLModel):
     table_id: Annotated[int, Field()]
 
@@ -12,7 +17,9 @@ class OrderSession(OrderSessionBase, table=True):
 
     id: Annotated[int | None, Field(primary_key=True, default=None)]
     server_id: Annotated[int, Field()]
-    is_paid: Annotated[bool, Field()] = False
+    is_paid: Annotated[bool, Field(default=False)]
+    status: Annotated[OrderSessionStatus, 
+                    Field(default=OrderSessionStatus.opening)]
     total_amount: Annotated[Decimal, 
                     Field(max_digits=13, decimal_places=3,
                         ge=Decimal(0.000), default=Decimal(0.000))]
@@ -27,24 +34,21 @@ class OrderSessionPublic(OrderSessionBase):
     id: Annotated[int, Field()]
     server_id: Annotated[int, Field()]
     is_paid: Annotated[bool, Field()]
+    status: Annotated[OrderSessionStatus, Field()]
     total_amount: Annotated[Decimal, Field()]
     created_at: Annotated[datetime, Field()]
     closed_at: Annotated[datetime | None, Field()]
-    order_items: Annotated[list["OrderItemPublic"], Field()]
+    order_items: Annotated[list["OrderItemPublicV1"], Field()]
 
 class OrderSessionUpdate(SQLModel):
     # tabel_id: Annotated[int | None, Field()]
     is_paid: Annotated[bool | None, Field(default=None)]
+    status: Annotated[OrderSessionStatus, Field()]
     total_amount: Annotated[Decimal | None, 
                             Field(max_digits=13, decimal_places=3,
                                     ge=Decimal(0.000), default=None)]
     closed_at: Annotated[datetime | None, Field(default=None)]
 
-    # server_id
-
-# This is for select a single object
-# class OrderSessionPublicWithOrderItems(OrderSessionPublic):
-#     order_items: list["OrderItem"]
 
 class OrderItemStatus(str, Enum):
     pending = "pending"
@@ -63,19 +67,22 @@ class OrderItem(OrderItemBase, table=True):
 
     id: Annotated[int, Field(primary_key=True, default=None)]
     order_id: Annotated[int, Field(default=None, foreign_key="order_session.id")]
-    status: Annotated[OrderItemStatus, Field(default="pending")]
+    status: Annotated[OrderItemStatus, Field(default=OrderItemStatus.pending)]
     
     order: "OrderSession" = Relationship(back_populates="order_items")
 
 class OrderItemCreate(OrderItemBase):
     pass
 
-class OrderItemPublic(OrderItemBase):
-    id: Annotated[int, Field()]
+class OrderItemPublicV1(OrderItemBase):
+    # id: Annotated[int, Field()]
     # order_id: Annotated[int, Field()]
     status: Annotated[OrderItemStatus, Field()]
     # order: Annotated["OrderSession", Field()]
     # item: Annotated["Item", Field()]
+
+class OrderItemPublicV2(OrderItemPublicV1):
+    id: Annotated[int, Field()] 
 
 class OrderItemUpdate(SQLModel):
     quantity: Annotated[int | None, Field(ge=1, default=None)]

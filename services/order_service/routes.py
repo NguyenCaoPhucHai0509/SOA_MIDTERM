@@ -35,24 +35,40 @@ async def create_order(
     order: Annotated[OrderSessionCreate, Body()]
 ):
     
-    try:
-        list_order_items = []
-        for order_item in order.order_items:
-            list_order_items.append(
-                OrderItem(**order_item.model_dump(exclude_unset=True))
-            )
+    # try:
+    #     list_order_items = []
+    #     for order_item in order.order_items:
+    #         list_order_items.append(
+    #             OrderItem(**order_item.model_dump(exclude_unset=True))
+    #         )
 
-        order_db = OrderSession(
-            table_id=order.table_id,
-            server_id=x_staff_id,
-            order_items=list_order_items
-        )
+    #     order_db = OrderSession(
+    #         table_id=order.table_id,
+    #         server_id=x_staff_id,
+    #         order_items=list_order_items
+    #     )
         
-        session.add(order_db)
-        session.commit()
-    except DBAPIError as e:
-        # raise HTTPException(status_code=400, detail=str(e.orig))
-        raise HTTPException(status_code=500, detail="Database error")
+    #     session.add(order_db)
+    #     session.commit()
+    # except DBAPIError as e:
+    #     # raise HTTPException(status_code=400, detail=str(e.orig))
+    #     print(e)
+    #     raise HTTPException(status_code=500, detail="Database error")
+    
+    list_order_items = []
+    for order_item in order.order_items:
+        list_order_items.append(
+            OrderItem(**order_item.model_dump(exclude_unset=True))
+        )
+
+    order_db = OrderSession(
+        table_id=order.table_id,
+        server_id=x_staff_id,
+        order_items=list_order_items
+    )
+    
+    session.add(order_db)
+    session.commit()
     
     session.refresh(order_db)
     return order_db
