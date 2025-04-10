@@ -27,12 +27,6 @@ SERVICES = {
     "tables": "http://localhost:8004/tables"
 }
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("API GATEWAY: WELCOME")
-    yield
-    print("Sayonaraaaa!")
-
 app = FastAPI()
 
 app.add_middleware(
@@ -134,7 +128,7 @@ async def proxy_request(
     async with httpx.AsyncClient() as client:
 
         method = request.method
-        url = f"{service_url}/{path}"
+        url = f"{service_url}{path}"
         headers = dict(request.headers)
         # Using payload to get staff info and put all of them in headers.
         # First try.
@@ -173,7 +167,7 @@ async def proxy_request(
             # print("RESPONSE BODY ERROR:", response.text)
 
         return JSONResponse(
-            content=response_content, 
+            content=response.json(), 
             status_code=response.status_code
         )
     
@@ -186,8 +180,9 @@ async def gateway_proxy(
     request: Request, 
     staff_info: dict = Depends(decode_access_token)
 ):
-    print("SERVICE: ", service)
-    print("TOKEN: ", staff_info)
+    # print("SERVICE: ", service)
+    # print("TOKEN: ", staff_info)
+    if path == "": path = "/"
     
     if service not in SERVICES:
         raise HTTPException(

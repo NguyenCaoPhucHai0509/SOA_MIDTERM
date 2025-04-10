@@ -1,62 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Restaurant Management System - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4A6FA5;
+            --secondary-color: #166088;
+            --accent-color: #4CB5AE;
+            --text-color: #333333;
+            --light-color: #F5F5F5;
+            --error-color: #E74C3C;
+            --success-color: #2ECC71;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('Img/login_back.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(76, 181, 174, 0.2);
+            outline: none;
+        }
+
+        .form-group.password-group {
+            position: relative;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .error {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .restaurant-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .restaurant-logo i {
+            font-size: 40px;
+            color: var(--primary-color);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
 </head>
+
 <body>
-    <h2>Login</h2>
-    <form id="loginForm">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-        <button type="submit">Login</button>
-    </form>
-    <div id="errorMessage"></div>
+    <div class="login-container">
+        <div class="restaurant-logo">
+            <i class="fas fa-utensils"></i>
+        </div>
+        <div class="login-header">
+            <h1>Quản Lý Nhà Hàng</h1>
+            <p>Đăng nhập để tiếp tục</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Tên đăng nhập</label>
+                <input type="text" id="username" name="username" required placeholder="Nhập tên đăng nhập">
+            </div>
+
+            <div class="form-group password-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required placeholder="Nhập mật khẩu">
+            </div>
+
+            <button type="submit">Đăng Nhập</button>
+        </form>
+
+        <div id="error" class="error"></div>
+
+        <div class="footer">
+            Restaurant Management System
+        </div>
+    </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        document.getElementById("loginForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-            // Create form data
-            const formData = new FormData();
-            formData.append('username', document.getElementById('username').value);
-            formData.append('password', document.getElementById('password').value);
+            document.getElementById("error").innerText = "";
+            const submitButton = this.querySelector("button");
+            submitButton.disabled = true;
+            submitButton.innerText = "Bạn hãy đợi một lát nhé...";
 
             try {
-                const response = await fetch('http://localhost:8000/login', {
-                    method: 'POST',
-                    body: new URLSearchParams(formData), // Send as form data
+                // Tạo FormData và chuyển đổi sang URLSearchParams
+                const formData = new FormData();
+                formData.append('username', document.getElementById('username').value);
+                formData.append('password', document.getElementById('password').value);
+
+                const response = await fetch("http://localhost:8000/login", {
+                    method: "POST",
+                    body: new URLSearchParams(formData), // Gửi dữ liệu theo format URLSearchParams
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/x-www-form-urlencoded' // Đặt header Content-Type
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Invalid username or password.');
+                    throw new Error("Tên đăng nhập hoặc mật khẩu không chính xác");
                 }
 
-                const data = await response.json();
-                const { access_token, token_type, role } = data;
+                const result = await response.json();
+                const { access_token, token_type, role } = result;
 
                 // Store the access token in localStorage
                 localStorage.setItem('access_token', access_token);
                 localStorage.setItem('role', role)
 
-                // Redirect based on the user's role
+                // Chuyển hướng dựa trên vai trò
                 if (role === 'chef') {
-                    window.location.href = 'tmp.html'; // Redirect to tmp.html for chefs
+                    window.location.href = 'tmp.html'; // Chuyển đến tmp.html cho đầu bếp
                 } else if (role === 'waiter' || role === 'manager') {
-                    window.location.href = 'dashboard.html'; // Redirect to menu.html for waiters/managers
+                    window.location.href = 'dashboard.html'; // Chuyển đến table.html cho waiter/manager
                 } else {
-                    throw new Error('Unknown user role.');
+                    throw new Error('Vai trò người dùng không xác định');
                 }
             } catch (error) {
-                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById("error").innerText = error.message;
+                console.error("Login error:", error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = "Đăng Nhập";
             }
         });
     </script>
 </body>
+
 </html>

@@ -1,77 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Orders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4A6FA5;
+            --secondary-color: #166088;
+            --accent-color: #4CB5AE;
+            --text-color: #333333;
+            --light-color: #F5F5F5;
+            --error-color: #E74C3C;
+            --success-color: #2ECC71;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin: 20px 0 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: var(--secondary-color);
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 500;
+        }
+
+        td {
+            padding: 10px 15px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f3f3f3;
+        }
+
+        .order-details {
+            display: none;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+        }
+
+        .divider {
+            height: 2px;
+            background-color: gray;
+            margin: 20px 0;
+            border: none;
+        }
+
+        .header-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-cell {
+            width: 50px;
+            text-align: center;
+        }
+
+        .quantity-input {
+            width: 70px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .header-action {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <h2>Manage Orders</h2>
+    <div class="container">
+        <div class="header-action">
+            <a href="table.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Tables
+            </a>
+            <h2>Manage Orders</h2>
+        </div>
 
-    <!-- Orders List -->
-    <h3>Orders</h3>
-    <table border="1" id="ordersTable">
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Table ID</th>
-                <th>Status</th>
-                <th>Total Amount</th>
-                <th>Created At</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="ordersTableBody">
-            <!-- Orders will be dynamically populated here -->
-        </tbody>
-    </table>
+        <div class="card">
+            <h3>Orders</h3>
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Table ID</th>
+                        <th>Status</th>
+                        <th>Total Amount</th>
+                        <th>Created At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <!-- Orders will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Selected Order Details -->
-    <div id="orderDetails" style="display: none;">
-        <h3>Order Details (Order ID: <span id="detailOrderId"></span>)</h3>
-        <p><strong>Table ID:</strong> <span id="detailTableId"></span></p>
-        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-        <p><strong>Total Amount:</strong> <span id="detailTotalAmount"></span></p>
-        <p><strong>Created At:</strong> <span id="detailCreatedAt"></span></p>
+        <div class="card order-details" id="orderDetails">
+            <h3>Order Details (Order ID: <span id="detailOrderId"></span>)</h3>
 
-        <hr style="height:2px;border-width:0;color:gray;background-color:gray">
-        <!-- Add New Order Items -->
-        <h3>Add New Order Items</h3> <span><button type="button" onclick="confirmOrder()">Confirm</button></span>
-        <table border="1" id="menuTable">
-            <thead>
-                <tr>
-                    <th>Select</th>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Available</th>
-                    <th>Quantity</th>
-                    <th>Note</th>
-                </tr>
-            </thead>
-            <tbody id="menuTableBody">
-                <!-- Menu items will be dynamically populated here -->
-            </tbody>
-        </table>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Table ID:</span>
+                    <span class="info-value" id="detailTableId"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" id="detailStatus"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total Amount:</span>
+                    <span class="info-value" id="detailTotalAmount"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Created At:</span>
+                    <span class="info-value" id="detailCreatedAt"></span>
+                </div>
+            </div>
 
-        <hr style="height:2px;border-width:0;color:gray;background-color:gray">
-        <!-- Edit Existing Order Items -->
-        <h3>Order Items</h3>
-        <table border="1" id="orderItemsTable">
-            <thead>
-                <tr>
-                    <!-- <th>ID</th> -->
-                    <th>Item ID</th>
-                    <th>Quantity</th>
-                    <th>Note</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="orderItemsTableBody">
-                <!-- Order items will be dynamically populated here -->
-            </tbody>
-        </table>
+            <hr class="divider">
+
+            <div class="section-header">
+                <h3>Add New Order Items</h3>
+                <button type="button" class="btn btn-success" onclick="confirmOrder()">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+            </div>
+
+            <table id="menuTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">Select</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Available</th>
+                        <th>Quantity</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody id="menuTableBody">
+                    <!-- Menu items will be dynamically populated here -->
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h3>Order Items</h3>
+            <table id="orderItemsTable">
+                <thead>
+                    <tr>
+                        <th>Item ID</th>
+                        <th>Quantity</th>
+                        <th>Note</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="orderItemsTableBody">
+                    <!-- Order items will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -122,7 +367,9 @@
                     <td>${parseFloat(order.total_amount).toFixed(2)}</td>
                     <td>${new Date(order.created_at).toLocaleString()}</td>
                     <td>
-                        <button onclick="showOrderDetails(${order.id})">View Details</button>
+                        <button class="btn" onclick="showOrderDetails(${order.id})">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -164,18 +411,18 @@
 
             orderItems.forEach(orderItem => {
                 const row = document.createElement('tr');
-                // Khi Dev thi co the de <td>${orderItem.id}</td>
-                // De de quan ly
-                // Khi Product thi khong nen de no
                 row.innerHTML = `
-                    
                     <td>${orderItem.item_id}</td>
                     <td>${orderItem.quantity}</td>
                     <td>${orderItem.note || 'None'}</td>
                     <td>${orderItem.status}</td>
                     <td>
-                        <button onclick="editOrderItem(${orderItem.id}, ${orderItem.quantity}, '${orderItem.note}')">Edit</button>
-                        <button onclick="cancelOrderItem(${orderItem.id})">Cancel</button>
+                        <button class="btn" onclick="editOrderItem(${orderItem.id}, ${orderItem.quantity}, '${orderItem.note || ''}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger" onclick="cancelOrderItem(${orderItem.id})">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -226,13 +473,13 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><input type="checkbox" class="item-checkbox" data-id="${item.id}"></td>
+                    <td class="checkbox-cell"><input type="checkbox" class="item-checkbox" data-id="${item.id}"></td>
                     <td>${item.id}</td>
                     <td>${item.name}</td>
                     <td>$${price.toFixed(2)}</td>
                     <td>${item.is_available ? 'Yes' : 'No'}</td>
-                    <td><input type="number" class="item-quantity" value="1" min="1"></td>
-                    <td><input type="text" class="item-note" placeholder="Optional note"></td>
+                    <td><input type="number" class="quantity-input" value="1" min="1"></td>
+                    <td><input type="text" class="note-input" placeholder="Optional note"></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -245,10 +492,10 @@
 
             rows.forEach(row => {
                 const checkbox = row.querySelector('.item-checkbox');
-                if (checkbox.checked) {
+                if (checkbox && checkbox.checked) {
                     const itemId = parseInt(checkbox.dataset.id);
-                    const quantity = parseInt(row.querySelector('.item-quantity').value);
-                    const note = row.querySelector('.item-note').value;
+                    const quantity = parseInt(row.querySelector('.quantity-input').value);
+                    const note = row.querySelector('.note-input').value;
                     selectedItems.push({
                         item_id: itemId,
                         quantity: quantity,
@@ -376,7 +623,15 @@
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             fetchOrders();
+
+            // Check for selected table ID from localStorage (if coming from table page)
+            const selectedTableId = localStorage.getItem('selectedTableId');
+            if (selectedTableId) {
+                // In a real app, you would filter orders by table ID here
+                console.log('Selected Table ID:', selectedTableId);
+            }
         });
     </script>
 </body>
+
 </html>
