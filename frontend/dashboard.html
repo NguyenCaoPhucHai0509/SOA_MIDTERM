@@ -5,10 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Order Management</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
     <div class="app">
+        <!-- Notification -->
+        <div class="notification" id="notification" style="display: none;"></div>
+
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="user-info">
@@ -57,18 +60,23 @@
             <div class="order-items" id="order-items">
                 <!-- Order items will be populated by JavaScript -->
             </div>
+            <div class="recent-messages">
+                <h3>Recent Messages</h3>
+                <div id="message-log"></div>
+            </div>
         </div>
 
         <!-- Tables Modal -->
         <div class="modal" id="tables-modal" style="display: none;">
             <div class="modal-content">
                 <button class="close-modal" onclick="closeTablesModal()">X</button>
-                <div class="tables-grid" id="tables-grid">
+                <div class="tables-grid" id="tables-grid" onclick="selectTable(event)">
                     <!-- Tables will be populated by JavaScript -->
                 </div>
             </div>
         </div>
+
     </div>
-    <script src="./script.js"></script>
+    <script src="./js/script.js"></script>
 </body>
 </html>
