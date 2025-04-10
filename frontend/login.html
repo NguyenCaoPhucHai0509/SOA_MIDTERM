@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Management System - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #4A6FA5;
@@ -147,7 +148,6 @@
             color: #666;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -191,23 +191,40 @@
             submitButton.innerText = "Bạn hãy đợi một lát nhé...";
 
             try {
-                let formData = new FormData(this);
+                // Tạo FormData và chuyển đổi sang URLSearchParams
+                const formData = new FormData();
+                formData.append('username', document.getElementById('username').value);
+                formData.append('password', document.getElementById('password').value);
 
-                let response = await fetch("http://localhost:8000/login", {
+                const response = await fetch("http://localhost:8000/login", {
                     method: "POST",
-                    body: formData
+                    body: new URLSearchParams(formData), // Gửi dữ liệu theo format URLSearchParams
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded' // Đặt header Content-Type
+                    }
                 });
 
-                let result = await response.json();
+                if (!response.ok) {
+                    throw new Error("Tên đăng nhập hoặc mật khẩu không chính xác");
+                }
 
-                if (response.ok) {
-                    localStorage.setItem("access_token", result.access_token);
-                    window.location.href = "menu.html";
+                const result = await response.json();
+                const { access_token, token_type, role } = result;
+
+                // Store the access token in localStorage
+                localStorage.setItem('access_token', access_token);
+                localStorage.setItem('role', role)
+
+                // Chuyển hướng dựa trên vai trò
+                if (role === 'chef') {
+                    window.location.href = 'tmp.html'; // Chuyển đến tmp.html cho đầu bếp
+                } else if (role === 'waiter' || role === 'manager') {
+                    window.location.href = 'dashboard.html'; // Chuyển đến table.html cho waiter/manager
                 } else {
-                    document.getElementById("error").innerText = "Tên đăng nhập hoặc mật khẩu không chính xác";
+                    throw new Error('Vai trò người dùng không xác định');
                 }
             } catch (error) {
-                document.getElementById("error").innerText = "Lỗi kết nối. Vui lòng thử lại sau.";
+                document.getElementById("error").innerText = error.message;
                 console.error("Login error:", error);
             } finally {
                 submitButton.disabled = false;

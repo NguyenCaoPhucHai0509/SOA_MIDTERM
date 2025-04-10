@@ -1,0 +1,74 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Order Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="user-info">
+                <div class="avatar"></div>
+                <span>NAME</span>
+            </div>
+            <button class="tab active" onclick="switchTab('create-order')">Create Order</button>
+            <button class="tab" onclick="switchTab('manage-order')">Manage Order</button>
+            <button class="tab" onclick="switchTab('statistic')">Statistic</button>
+            <button class="logout" onclick="logout()">Log out</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Create Order Tab -->
+            <div id="create-order" class="tab-content">
+                <div class="content-header">
+                    <input type="text" id="search-items" placeholder="Search items..." onkeyup="filterItems()">
+                    <button onclick="openTablesModal()">Open Tables</button>
+                    <button onclick="createOrder()">Create</button>
+                </div>
+                <div class="menu-grid" id="menu-grid">
+                    <!-- Menu items will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Manage Order Tab -->
+            <div id="manage-order" class="tab-content" style="display: none;">
+                <h2>Manage Orders</h2>
+                <p>Placeholder for managing orders.</p>
+            </div>
+
+            <!-- Statistic Tab -->
+            <div id="statistic" class="tab-content" style="display: none;">
+                <h2>Statistics</h2>
+                <p>Placeholder for statistics.</p>
+            </div>
+        </div>
+
+        <!-- Order Basket -->
+        <div class="order-basket" id="order-basket">
+            <div class="basket-header">
+                <button onclick="toggleBasket()">Close Basket</button>
+                <input type="text" id="search-order-items" placeholder="Search order items..." onkeyup="filterOrderItems()">
+            </div>
+            <div class="order-items" id="order-items">
+                <!-- Order items will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Tables Modal -->
+        <div class="modal" id="tables-modal" style="display: none;">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeTablesModal()">X</button>
+                <div class="tables-grid" id="tables-grid">
+                    <!-- Tables will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./script.js"></script>
+</body>
+</html>

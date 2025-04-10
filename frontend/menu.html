@@ -80,7 +80,8 @@
             margin-right: 20px;
         }
 
-        .logout-btn {
+        .logout-btn,
+        .back-btn {
             background-color: transparent;
             border: 1px solid white;
             color: white;
@@ -88,9 +89,15 @@
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover,
+        .back-btn:hover {
             background-color: white;
             color: var(--primary-color);
         }
@@ -172,23 +179,6 @@
             min-width: 200px;
         }
 
-        .add-item-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s ease;
-        }
-
-        .add-item-btn:hover {
-            background-color: var(--secondary-color);
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -235,13 +225,15 @@
             color: var(--unavailable-color);
         }
 
-        .action-cell {
-            display: flex;
-            gap: 10px;
+        .note-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
 
         .btn {
-            padding: 5px 10px;
+            padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
             border: none;
@@ -249,45 +241,41 @@
             transition: all 0.3s ease;
         }
 
-        .edit-btn {
-            background-color: #3498DB;
+        .btn-primary {
+            background-color: var(--primary-color);
             color: white;
         }
 
-        .edit-btn:hover {
-            background-color: #2980B9;
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
         }
 
-        .delete-btn {
-            background-color: #E74C3C;
+        .create-order-btn {
+            display: block;
+            margin: 30px auto;
+            padding: 12px 24px;
+            background-color: var(--accent-color);
             color: white;
-        }
-
-        .delete-btn:hover {
-            background-color: #C0392B;
-        }
-
-        .pagination {
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
+            align-items: center;
             justify-content: center;
-            margin-top: 20px;
             gap: 10px;
         }
 
-        .pagination-btn {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            background-color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .create-order-btn:hover {
+            background-color: #3a9d98;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
 
-        .pagination-btn:hover,
-        .pagination-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+        .create-order-btn i {
+            font-size: 1.2rem;
         }
 
         .price-cell {
@@ -301,6 +289,41 @@
             font-size: 0.9rem;
             padding: 20px 0;
             border-top: 1px solid #eee;
+        }
+
+        .order-badge {
+            background-color: #f1c40f;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .table-info {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-number {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-number i {
+            color: var(--accent-color);
         }
 
         /* Responsive styles */
@@ -342,6 +365,9 @@
             </div>
             <div class="user-info">
                 <span id="user-name">Xin chào, <strong id="staff-name">Nhân viên</strong></span>
+                <a href="table.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
                 <button onclick="logout()" class="logout-btn">
                     <i class="fas fa-sign-out-alt"></i> Đăng xuất
                 </button>
@@ -350,6 +376,15 @@
     </header>
 
     <div class="container">
+        <div class="table-info">
+            <div class="table-number">
+                <i class="fas fa-chair"></i> Bàn: <span id="table-number">...</span>
+            </div>
+            <div id="order-status">
+                <span id="selected-items-count" class="order-badge">0 món đã chọn</span>
+            </div>
+        </div>
+
         <h1 class="page-title">Quản lý Menu</h1>
 
         <div class="dashboard-info">
@@ -386,37 +421,62 @@
                     <th>Tên món</th>
                     <th>Giá</th>
                     <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                    <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody id="menu-table">
+                <!-- Menu items will be dynamically populated here -->
             </tbody>
         </table>
 
-        <div class="pagination">
-            <button class="pagination-btn" disabled>
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="pagination-btn active">1</button>
-            <button class="pagination-btn">2</button>
-            <button class="pagination-btn">3</button>
-            <button class="pagination-btn">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
+        <button class="create-order-btn" onclick="createOrder()">
+            <i class="fas fa-utensils"></i> Tạo đơn hàng
+        </button>
     </div>
 
     <footer class="footer">
-        <p>Restaurant Management System.</p>
+        <p>Restaurant Management System</p>
     </footer>
 
     <script>
+        let currentTableId = localStorage.getItem('selectedTableId'); // Retrieve table_id from localStorage
+        let orderItems = []; // Array to store selected items for the order
+
+        // Fetch menu items from the API
+        async function fetchMenu() {
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Access token not found. Please log in.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('http://localhost:8000/menu/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(async (response) => {
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert("Error: " + errorData.detail);
+                } else {
+                    const menuItems = await response.json();
+                    populateMenuTable(menuItems)
+                }
+            })
+        }
+        
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND'
             }).format(amount);
         }
+
         function logout() {
             localStorage.removeItem("access_token");
             window.location.href = "login.html";
@@ -424,7 +484,7 @@
 
         function updateStats(items) {
             const totalItems = items.length;
-            const availableItems = items.filter(item => item.available).length;
+            const availableItems = items.filter(item => item.is_available).length;
             const unavailableItems = totalItems - availableItems;
 
             document.getElementById('total-items').textContent = totalItems;
@@ -432,13 +492,93 @@
             document.getElementById('unavailable-items').textContent = unavailableItems;
         }
 
+        function updateOrderBadge() {
+            document.getElementById('selected-items-count').textContent = `${orderItems.length} món đã chọn`;
+        }
+
+        // Add an item to the order
+        function addItemToOrder(itemId, itemName) {
+            // Get the note for this specific item
+            const noteInput = document.getElementById(`note-${itemId}`);
+            const note = noteInput.value.trim(); // Trim whitespace
+
+            const quantity = 1; // Default quantity is 1
+
+            // Check if the item is already in the order
+            const existingItem = orderItems.find(item => item.item_id === itemId);
+            if (existingItem) {
+                existingItem.quantity += 1; // Increment quantity if already added
+            } else {
+                // Add new item to the order
+                orderItems.push({
+                    item_id: itemId,
+                    quantity: quantity,
+                    note: note || null // Add note if provided
+                });
+            }
+
+            alert(`Đã thêm "${itemName}" vào đơn hàng.`);
+            noteInput.value = ''; // Clear the note input
+            updateOrderBadge(); // Update the order badge count
+        }
+
+        // Create the order
+        async function createOrder() {
+            if (orderItems.length === 0) {
+                alert('Vui lòng thêm ít nhất một món vào đơn hàng.');
+                return;
+            }
+
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Không tìm thấy token. Vui lòng đăng nhập lại.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        table_id: parseInt(currentTableId),
+                        order_items: orderItems
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tạo đơn hàng.');
+                }
+
+                alert('Đơn hàng đã được tạo thành công!');
+                orderItems = []; // Clear the order items
+                updateOrderBadge(); // Update the order badge count
+                window.location.href = 'table.html'; // Redirect back to the table page
+            } catch (error) {
+                console.error('Error creating order:', error);
+                alert('Không thể tạo đơn hàng. Vui lòng thử lại.');
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentTableId) {
+                alert('Chưa chọn bàn. Vui lòng quay lại và chọn bàn.');
+                window.location.href = 'table.html';
+                return;
+            }
+
+            // Display the table number
+            document.getElementById('table-number').textContent = currentTableId;
+
             const tableBody = document.getElementById("menu-table");
             const searchInput = document.getElementById("search-input");
             let allItems = [];
 
             try {
-                const response = await fetch("http://localhost:8000/menu/", {
+                const response = await fetch("http://localhost:8000/menu", {
                     method: "GET",
                     headers: {
                         "Authorization": "Bearer " + localStorage.getItem("access_token")
@@ -461,7 +601,7 @@
                 }
 
                 updateStats(allItems);
-
+                updateOrderBadge();
                 renderTable(allItems);
 
                 searchInput.addEventListener("input", (e) => {
@@ -483,8 +623,9 @@
                 items.forEach(item => {
                     const row = document.createElement("tr");
 
-                    const availabilityClass = item.available ? "available" : "unavailable";
-                    const availabilityText = item.available ? "Có sẵn" : "Hết hàng";
+                    const availabilityClass = item.is_available ? "available" : "unavailable";
+                    const availabilityText = item.is_available ? "Có sẵn" : "Hết hàng";
+                    const disabled = !item.is_available ? "disabled" : "";
 
                     row.innerHTML = `
                         <td>${item.id}</td>
@@ -495,6 +636,12 @@
                                 ${availabilityText}
                             </span>
                         </td>
+                        <td><input type="text" id="note-${item.id}" class="note-input" placeholder="Ghi chú (tùy chọn)"></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="addItemToOrder(${item.id}, '${item.name}')" ${disabled}>
+                                <i class="fas fa-plus"></i> Thêm vào đơn
+                            </button>
+                        </td>
                     `;
 
                     tableBody.appendChild(row);
@@ -503,7 +650,7 @@
                 if (items.length === 0) {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td colspan="4" style="text-align: center; padding: 20px;">
+                        <td colspan="6" style="text-align: center; padding: 20px;">
                             Không tìm thấy món ăn nào. Hãy thử tìm kiếm khác.
                         </td>
                     `;
