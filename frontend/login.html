@@ -213,11 +213,11 @@
 
                 // Store the access token in localStorage
                 localStorage.setItem('access_token', access_token);
-                localStorage.setItem('role', role)
+                sessionStorage.setItem('role', role)
 
                 // Chuyển hướng dựa trên vai trò
                 if (role === 'chef') {
-                    window.location.href = 'tmp.html'; // Chuyển đến tmp.html cho đầu bếp
+                    window.location.href = 'chef.html'; // Chuyển đến chef.html cho đầu bếp
                 } else if (role === 'waiter' || role === 'manager') {
                     window.location.href = 'dashboard.html'; // Chuyển đến table.html cho waiter/manager
                 } else {

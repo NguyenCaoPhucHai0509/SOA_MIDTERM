@@ -40,8 +40,20 @@
 
             <!-- Manage Order Tab -->
             <div id="manage-order" class="tab-content" style="display: none;">
-                <h2>Manage Orders</h2>
-                <p>Placeholder for managing orders.</p>
+                <div class="manage-order-header">
+                    <h2>Manage Orders</h2>
+                </div>
+                <div id="orders-list"></div>
+                <button id="load-more-orders" onclick="loadMoreOrders()">Load More</button>
+            
+                <div class="modal" id="add-items-modal" style="display: none;">
+                    <div class="modal-content">
+                        <button class="close-modal" onclick="closeAddItemsModal()">X</button>
+                        <h3>Add More Items to Order</h3>
+                        <div id="add-items-grid"></div>
+                        <button onclick="submitNewItems()">Add Items</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Statistic Tab -->

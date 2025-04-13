@@ -6,6 +6,8 @@ from fastapi.routing import APIRouter
 from sqlmodel import Session, select, Field
 from sqlalchemy.exc import DBAPIError
 from typing import Annotated, TYPE_CHECKING
+import json
+from decimal import Decimal
 
 from .models import (
     OrderSession, OrderSessionCreate, 
@@ -14,8 +16,12 @@ from .models import (
     OrderItemCreate, OrderItemUpdate, OrderItemStatus
 )
 from .database import get_session
+from .pubsub import publish_event
+from .utils import make_json_serializable
+from .connect_manager import manager
 
 router = APIRouter()
+
 
 # async def validate_table(
 #     session: Annotated[Session, Depends(get_session)],
@@ -35,42 +41,37 @@ async def create_order(
     order: Annotated[OrderSessionCreate, Body()]
 ):
     
-    # try:
-    #     list_order_items = []
-    #     for order_item in order.order_items:
-    #         list_order_items.append(
-    #             OrderItem(**order_item.model_dump(exclude_unset=True))
-    #         )
+    try:
+        list_order_items = []
+        for order_item in order.order_items:
+            list_order_items.append(
+                OrderItem(**order_item.model_dump(exclude_unset=True))
+            )
 
-    #     order_db = OrderSession(
-    #         table_id=order.table_id,
-    #         server_id=x_staff_id,
-    #         order_items=list_order_items
-    #     )
-        
-    #     session.add(order_db)
-    #     session.commit()
-    # except DBAPIError as e:
-    #     # raise HTTPException(status_code=400, detail=str(e.orig))
-    #     print(e)
-    #     raise HTTPException(status_code=500, detail="Database error")
-    
-    list_order_items = []
-    for order_item in order.order_items:
-        list_order_items.append(
-            OrderItem(**order_item.model_dump(exclude_unset=True))
+        order_db = OrderSession(
+            table_id=order.table_id,
+            server_id=x_staff_id,
+            order_items=list_order_items
         )
-
-    order_db = OrderSession(
-        table_id=order.table_id,
-        server_id=x_staff_id,
-        order_items=list_order_items
-    )
-    
-    session.add(order_db)
-    session.commit()
+        
+        session.add(order_db)
+        session.commit()
+    except DBAPIError as e:
+        # raise HTTPException(status_code=400, detail=str(e.orig))
+        raise HTTPException(status_code=500, detail="Database error")
     
     session.refresh(order_db)
+
+    order_data = make_json_serializable(order_db.model_dump())
+
+    await manager.broadcast_to_role(
+        message={
+            "event": "order_created", 
+            "data": order_data
+        },
+        role="chef"
+    )
+
     return order_db
     
 @router.get("/", response_model=list[OrderSessionPublic])

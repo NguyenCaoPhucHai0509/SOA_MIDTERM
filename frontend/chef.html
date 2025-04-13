@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Order Management</title>
+    <link rel="stylesheet" href="/css/chef.css">
+</head>
+<body>
+    <h1>Restaurant Order Management</h1>
+    <div id="notifications">
+        <h3>Notifications</h3>
+        <ul id="notificationList"></ul>
+    </div>
+    <script>
+        let ws = null;
+        const role = sessionStorage.getItem("role");
+        const notificationList = document.getElementById('notificationList');
+
+        function connectWebSocket() {
+            if (ws) ws.close();
+            ws = new WebSocket(`ws://localhost:8003/ws/${role}`);
+            ws.onopen = function() {
+                console.log("WebSocket connected for chef");
+            };
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log("Received message:", data);
+                const li = document.createElement('li');
+                li.textContent = "New Order";
+                notificationList.prepend(li);
+            };
+            ws.onclose = function() {
+                console.log("WebSocket closed for chef, reconnecting...");
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+        connectWebSocket();
+    </script>
+</body>
+</html>
